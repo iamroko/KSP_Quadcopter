@@ -4,7 +4,7 @@
 copypath("0:/Quadcopter/Quadcopter.ks", "Quadcopter.ks").
 copypath("0:/Quadcopter/deploy.ks", "deploy.ks").
 copypath("0:/Quadcopter/lib_comm_manager.ks", "lib_comm_manager.ks").
-copypath("0:/Quadcopter/lib_geo.ks", "lib_geo.ks").
+//copypath("0:/Quadcopter/lib_geo.ks", "lib_geo.ks").
 copypath("0:/Quadcopter/lib_navball.ks", "lib_navball.ks").
 copypath("0:/Quadcopter/lib_slope.ks", "lib_slope.ks").
 copypath("0:/Quadcopter/Parameters", "/").
