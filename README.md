@@ -42,7 +42,7 @@ There is no guarantee for backwards compatibility for mission files as new featu
 
 ## Libraries from other contributors.
 
-This script uses [lib_navball.ks](https://github.com/KSP-KOS/KSLib/blob/master/library/lib_navball.ks) from [KSPLib](https://github.com/KSP-KOS/KSLib), provided under the MIT license. 
+This script uses [lib_navball.ks](https://github.com/KSP-KOS/KSLib/blob/master/library/lib_navball.ks) from [KSLib](https://github.com/KSP-KOS/KSLib), provided under the MIT license. 
 
 ## License
 
