@@ -33,6 +33,7 @@ Not strictly related to the Quadcopter flight, and not required, there is a Comm
 ## Future Development
 
 There is a fair amount of cleanup and documentation still required. The program is relativley complete and functional, however a few features are still planned:
+- Use velocity limits in the "fly" mission command
 - Better altitude control (i.e. selectable AGL vs ASL altitude. Right now the script terrain-hugs (i.e. AGL)).
 - Smart Landing to search for suitable landing spots near waypoints. The code to do this exists for emergecy landing, so it should be relatively simple to include in regular missions. 
 - Laser rangefinder integration. This will help when landing near objects not represented by terrain height (i.e. other ships)
