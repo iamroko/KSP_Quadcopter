@@ -534,6 +534,7 @@ set gear_bypass to False.
 
 ON ABORT {
     set emergency to True.
+    set state to "recovery".
 }
 
 // The Main Loop
