@@ -431,7 +431,7 @@ function lidar_nadir {
 }
 
 
-set quadcopter to ship.
+set quadcopter to ship. // For future use.
 
 function start_up_sequence {
 
@@ -545,7 +545,7 @@ until state = "exit" {
 
     }
 
-    // Run Comms Manager to ensure connectivity. CUrrently only runs every 30 seconds to reduce load. 
+    // Run Comms Manager to ensure connectivity. Currently only runs every 30 seconds to reduce load. 
     // This should be fine for most MEO to GEO comms constellations. 
     if TIME:SECONDS - comms_manager_lastrun > 30 and use_comms_manager {
         comms_manager(commsat_list, SHIP:PARTSDUBBED("auto_antenna")).
@@ -558,8 +558,6 @@ until state = "exit" {
 
             // Undock
             // There is a Kraken risk here. If Krakening, comment out this code and manually undock before starting the program.
-
-                    // Docked (dockee)
 
             //print(ship:partstagged("copterDockingPort")[0]:STATE).
 
@@ -623,7 +621,7 @@ until state = "exit" {
 
 
         set heading_target to get_bearing(SHIP:GEOPOSITION, destination).
-        //print(destination).
+
         // Don't start flying until within certain deadband of heading.
         if abs(heading_pid:error) > 20 {
             set forward_velocity_target to 0.
@@ -631,22 +629,8 @@ until state = "exit" {
 
         } else { 
             // Need time to decelerate, and this will depend on the body's atmosphere and PID tuning.
-            // TODO: Add to parameters list. 
-            // Good for Kerbin:
-            //set forward_velocity_target to abs(min(get_distance(SHIP:GEOPOSITION, destination)/8-0.1, forward_velocity_limit)).
-            // Good for Duna
             set forward_velocity_target to abs(max(min(get_distance(SHIP:GEOPOSITION, destination)/8, forward_velocity_limit), 0.5)).
         }
-
-        // clearscreen.
-        // print("Mode:         Fly to " + destination).
-        // print("heading       " + compass_for(ship)).
-        // print("Target Hdg    " + heading_target).
-        // print("prograde vec  " + SHIP:SRFPROGRADE:VECTOR:X).
-        // print("groundspeed   " + ship:groundspeed).
-        // print("Distance      " + get_distance(SHIP:GEOPOSITION, destination)).
-        // print(emergency).
-  
 
         //if get_distance(SHIP:GEOPOSITION, destination:GEOPOSITION) < 500 {
         if get_distance(SHIP:GEOPOSITION, destination) < 10 {
@@ -660,7 +644,7 @@ until state = "exit" {
 
         // Setups to take care of only once, at the start of the flight state. 
         if pre_start {
-
+            print("Mode:          Hover at location").
             if current_task:haskey("Destination") {
                 set destination to parse_destination(current_task:Destination).
                 if current_task:Destination[0] = "dock" {
@@ -679,8 +663,8 @@ until state = "exit" {
 
         keep_position(destination).
 
-        clearscreen.
-        print("Mode:          Hover at location").
+        // clearscreen.
+        // print("Mode:          Hover at location").
         // print("heading       " + compass_for(ship)).
         // print("heading TGT   " + heading_target).
         // print("prograde vec  " + SHIP:SRFPROGRADE:VECTOR:X).
@@ -688,11 +672,11 @@ until state = "exit" {
         // print("Pitch - Roll  " + pitch_for(ship) + " - " + roll_for(ship)).
         // //print("Setpoint:     " + forward_velocity_pid:setpoint + " - " + lateral_velocity_pid:setpoint).
         // //print("Velocity:     " + round(forward_velocity,3) + " - " + round(lateral_velocity,3)).
-        print("Pos Error:    " + round(x_pid:error,3) + " - " + round(y_pid:error,3)).
-        print("PID P Terms:  " + round(x_pid:pterm,3) + " - " + round(y_pid:pterm,3)).   
-        print("PID I Terms:  " + round(x_pid:iterm,3) + " - " + round(y_pid:iterm,3)).   
-        print("PID D Terms:  " + round(x_pid:dterm,3) + " - " + round(y_pid:dterm,3)).     
-        // print("Emergency:    " + emergency).
+        // print("Pos Error:    " + round(x_pid:error,3) + " - " + round(y_pid:error,3)).
+        // print("PID P Terms:  " + round(x_pid:pterm,3) + " - " + round(y_pid:pterm,3)).   
+        // print("PID I Terms:  " + round(x_pid:iterm,3) + " - " + round(y_pid:iterm,3)).   
+        // print("PID D Terms:  " + round(x_pid:dterm,3) + " - " + round(y_pid:dterm,3)).     
+        // // print("Emergency:    " + emergency).
         // print(corrections).
         
         //TODO: Make this configurable in the mission control.
@@ -706,7 +690,6 @@ until state = "exit" {
         }
 
         // Check if we've got good positional error. if so, start the timer.
-        //if sqrt( x_pid:error*x_pid:error + y_pid:error*y_pid:error) < location_error and sqrt( x_pid:iterm*x_pid:iterm + y_pid:iterm*y_pid:iterm) < location_i {
         if sqrt( x_pid:error*x_pid:error + y_pid:error*y_pid:error) < location_error and VECTOREXCLUDE(SHIP:UP:FOREVECTOR , SHIP:VELOCITY:SURFACE):MAG < speed_error {
            //set state to "task_complete".
            if timer = -1 set timer to TIME:SECONDS.
@@ -789,20 +772,13 @@ until state = "exit" {
             // To Do: Make the relative heading angle configurable in the mission. 
         }
 
-        // Cut a piece of paper in half, forever. Or until docked.
-        // This isn't entirely correct. the nodeposition is relative to the center of mass of the target vessel.
-        //set altitude_target to (dock:NODEPOSITION):mag. //alt:radar - (dock:NODEPOSITION - ship:position):mag / 4.
         set altitude_target to target_dock_altitude.
 
-        
         keep_position(destination).
     
         // Check if docked, then go to "parked" mode. 
 
     } else if state = "parked" {
-
-        //clearscreen.
-        //print("Park").
 
         laser_off().
 
@@ -857,10 +833,7 @@ until state = "exit" {
                 print("Science Task Complete").
                 set state to "task_complete".
             }
-
-
         }
-
 
         if instrument_list:length > 0  and valid {
             if instrument_list[i]:GETMODULE("ModuleScienceExperiment"):HASDATA {
@@ -901,11 +874,6 @@ until state = "exit" {
         // Kill ship velocity and get to a stable altitude. 
         // May want to bypass the velocity and force setting attitude instead. 
         
-        //set pitch_target to 0.
-        //set roll_target to 0.
-        //set heading_target to 90.
-        //set thrust_target to 0.
-
         set altitude_target to 50.
 
         set forward_velocity_target to 0.
@@ -918,7 +886,6 @@ until state = "exit" {
                             set state to "emergency_land".
             }
         }
-
 
     } else if state = "calibration" {
 
@@ -987,14 +954,6 @@ until state = "exit" {
 
     }
 
-
-
-    // Land and Dock states have their own vertical velocity control, and don't want to maintain absolute altitude control. 
-    //if state <> "land" and state <> "dock" and state <> "calibrate" {
-    //    altitude_loop(altitude_target, altitude_reference).
-    //}
-
-
     if state <> "calibration" {
 
         set altitude_setpoint to altitude_target. // altitude_loop(altitude_target).
@@ -1018,7 +977,6 @@ until state = "exit" {
     // Check for emergency conditions. If any exist, go into recovery.
     
     if not emergency {
-        
         // Don't do these checks if already landing or parked. No need. 
         if state <> "land" and state <> "parked" and state <> "dock" {
             // Check for low battery
@@ -1029,9 +987,6 @@ until state = "exit" {
                 set emergency to True. 
             }
         }
-
-
-
     }
 
     // Do landing gear automagically! Because we can! But not always.
@@ -1042,6 +997,7 @@ until state = "exit" {
     }
     
 
+// Some debug arrows.... 
 
 //    SET headingArrow TO VECDRAWARGS(
 //    v(0,0,0),
@@ -1052,8 +1008,6 @@ until state = "exit" {
 //    1,
 //    TRUE
 //    ).
-
-
 
 //    SET facingArrow TO VECDRAWARGS(
 //    v(0,0,0),
@@ -1073,8 +1027,6 @@ until state = "exit" {
 //     TRUE
 //     ).
 
-//     wait 0.
-
 //     SET zenithArrow TO VECDRAWARGS(
 //     v(0,0,0),
 //     SHIP:UP:FOREVECTOR,
@@ -1088,7 +1040,6 @@ until state = "exit" {
 
 }
 
-
-// Cleanup. Should be more. 
+// Cleanup. These cause issues between missions if they persist. 
 unset min_solar_exposure.
 unset mission.
