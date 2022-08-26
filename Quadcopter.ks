@@ -532,6 +532,10 @@ set emergency to False.
 
 set gear_bypass to False.
 
+ON ABORT {
+    set emergency to True.
+}
+
 // The Main Loop
 until state = "exit" {
 
@@ -568,6 +572,8 @@ until state = "exit" {
     if state = "takeoff" {
 
         if pre_start {
+
+            wait 1.
 
             // Undock
             // There is a Kraken risk here. If Krakening, comment out this code and manually undock before starting the program.
@@ -799,6 +805,8 @@ until state = "exit" {
 
         shut_down_sequence().
 
+
+        wait 1.
         // Probably do a few other things too, to shut down the copter. 
 
         set state to "task_complete".
@@ -1000,6 +1008,7 @@ until state = "exit" {
                 set emergency to True. 
             }
         }
+
     }
 
     // Do landing gear automagically! Because we can! But not always.
