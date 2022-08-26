@@ -702,8 +702,8 @@ until state = "exit" {
         //TODO: Make this configurable in the mission control.
         if emergency {
             // If emergency, just get a "good enough" position. Don't waste time getting precise.  
-            set location_error to 2.5.
-            set speed_error to 1.5.
+            set location_error to 0.5.
+            set speed_error to .25.
         } else {
             set location_error to 0.1.
             set speed_error to 0.1.
