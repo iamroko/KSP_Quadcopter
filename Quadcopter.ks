@@ -775,6 +775,11 @@ until state = "exit" {
 
             set target_dock_altitude to vessel(current_task:destination[1]):geoposition:altitudeposition(vessel(current_task:destination[1]):geoposition:terrainheight):mag + (up:forevector*target_dock:nodeposition).
             print("Dockign port altitude is " + target_dock_altitude + "m above terrain.").
+
+            if not vessel(current_task:Destination[1]):isdead {
+                set heading_target to compass_for(vessel(current_task:Destination[1])).
+                // To Do: Make the relative heading angle configurable in the mission. 
+            }
         }
 
         // Nominally, the port will go through these states:
@@ -787,10 +792,7 @@ until state = "exit" {
         //print(ship:partstagged("copterDockingPort")[0]:STATE). // States didn't seem to match documentation. This is for debugging. 
         if ship:partstagged("copterDockingPort")[0]:STATE = "Docked (docker)" or ship:partstagged("copterDockingPort")[0]:STATE = "Docked (dockee)" or ship:partstagged("copterDockingPort")[0]:STATE = "Docked (same vessel)" or ship:partstagged("copterDockingPort")[0]:STATE = "Acquire" {
             set state to "parked".
-        } else if not vessel(current_task:Destination[1]):isdead {
-            set heading_target to compass_for(vessel(current_task:Destination[1])).
-            // To Do: Make the relative heading angle configurable in the mission. 
-        }
+        } else {}
 
         set altitude_target to target_dock_altitude.
 
