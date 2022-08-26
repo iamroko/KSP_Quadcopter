@@ -1,6 +1,6 @@
 // Parameters for Quadcopter flight on Kerbin. Kerbal's top scientists aren't sure what any of them mean, but they do break things if you set them wrong. 
 // Note, not all parameters are nessecarily used. Some are wishful thinking.
-// These generally work well on Kerbin. Not perfect, but Good Enough (TM).
+// These generally work well on Kerbin, but have a lot of room for improvement. 
 
 declare global blade_pitch is 9.
 
