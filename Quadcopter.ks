@@ -219,6 +219,7 @@ function stability_loop {
     }
 
     // Avoid rollover errors when pointing north. This probably breaks naviation for a range of angles. In fact I know it does.
+    // This is now depracated, as the issues is (properly) fixed in the lines above. Remove this code after sufficient testing. 
 
     // if compass_for(ship) < 45 {
     //     set heading_setpoint to heading_setpoint - 180.
