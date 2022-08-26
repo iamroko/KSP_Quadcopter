@@ -505,13 +505,13 @@ set state to "takeoff".
 set pitch_target to 0.
 set roll_target to 0.
 set heading_target to 90.
-set thrust_target to 0.
+//set thrust_target to 0.
 
 set altitude_target to 50.
 
 set forward_velocity_target to 0.
 set lateral_velocity_target to 0.
-set vertical_velocity_target to 0.
+//set vertical_velocity_target to 0.
 
 
 set speed_target to forward_velocity_limit.

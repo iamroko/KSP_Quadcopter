@@ -52,7 +52,7 @@ declare global y_kp is 1.
 declare global y_ki is 0.5.
 declare global y_kd is 2.
 
-declare global commsat_list is LIST("CommSat I Block II", "CommSat II Block II", "CommSat III Block II").
+declare global commsat_list is LIST("Duna ommSat I", "Duna CommSat II", "Duna CommSat III").
 
 
 // How high should I be allowed to go.
