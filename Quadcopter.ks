@@ -554,8 +554,13 @@ until state = "exit" {
 
             // Undock
             // There is a Kraken risk here. If Krakening, comment out this code and manually undock before starting the program.
+
+                    // Docked (dockee)
+
+            //print(ship:partstagged("copterDockingPort")[0]:STATE).
+
             local undock is ship:partstagged("copterDockingPort").
-            if undock:length > 0 {
+            if undock:length > 0 and undock[0]:state = "Docked (dockee)" {
                 print("Undocking Now").
                 undock[0]:partner:undock().
             } else if undock:length > 1 {
