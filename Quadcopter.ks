@@ -312,12 +312,12 @@ function root_control {
     local parameter gain.
     if setpoint-current_value <= 0 {
         if setpoint-current_value >= -2 {
-            return current_value - gain*0.5*(current_value - setpoint).
+            return current_value - gain*0.5*abs(current_value - setpoint).
         } else {
             return current_value - gain*sqrt(abs(setpoint-current_value) - 1).
         }
     } if setpoint-current_value <= 2 {
-        return current_value + gain*0.5*(setpoint - current_value).
+        return current_value + gain*0.5*abs(setpoint - current_value).
     } else {
         return current_value + gain*sqrt(abs(setpoint-current_value) - 1).
     }
@@ -515,6 +515,8 @@ set comms_manager_lastrun to 0.
 
 set emergency to False.
 
+set gear_bypass to False.
+
 // The Main Loop
 until state = "exit" {
 
@@ -563,6 +565,7 @@ until state = "exit" {
             if undock:length > 0 and undock[0]:state = "Docked (dockee)" {
                 print("Undocking Now").
                 undock[0]:partner:undock().
+                set gear_bypass to True. 
             } else if undock:length > 1 {
                 //Too many tagged docking ports. Something will go wrong. 
             }
@@ -599,6 +602,7 @@ until state = "exit" {
         // Once within 1m altitude, complete takeoff task. 
         if abs( altitude_reference - altitude_target ) < 1 {
             set state to "task_complete".
+            set gear_bypass to False. 
             //set state to "calibrate".           // Uncomment this to short-circuit the state machine and go into calibration mode. 
         }
 
@@ -760,7 +764,7 @@ until state = "exit" {
         if pre_start {
 
             SET TARGET TO vessel(current_task:destination[1]):partstagged(current_task:destination[2])[0].
-
+            print("Descending to dock.").
             set pre_start to False. 
         }
 
@@ -768,8 +772,8 @@ until state = "exit" {
         // Ready
         // Acquire (dockee)
         // Docked (dockee)
+        //print(ship:partstagged("copterDockingPort")[0]:STATE).
 
-        print(ship:partstagged("copterDockingPort")[0]:STATE).
         // Check to see if we're docked yet or not. If not, we can proceed with docking, and will set our heading to match the target. 
         //print(ship:partstagged("copterDockingPort")[0]:STATE). // States didn't seem to match documentation. This is for debugging. 
         if ship:partstagged("copterDockingPort")[0]:STATE = "Docked (docker)" or ship:partstagged("copterDockingPort")[0]:STATE = "Docked (dockee)" or ship:partstagged("copterDockingPort")[0]:STATE = "Docked (same vessel)" or ship:partstagged("copterDockingPort")[0]:STATE = "Acquire" {
@@ -780,25 +784,11 @@ until state = "exit" {
         }
 
         // Cut a piece of paper in half, forever. Or until docked.
-        set altitude_target to alt:radar - (dock:NODEPOSITION - ship:position):mag / 4.
+        set altitude_target to (dock:NODEPOSITION):mag. //alt:radar - (dock:NODEPOSITION - ship:position):mag / 4.
 
         
         keep_position(destination).
-        
-        // clearscreen.
-        // print("Mode:          Hover at location").
-        // print("heading       " + compass_for(ship)).
-        // print("prograde vec  " + SHIP:SRFPROGRADE:VECTOR:X).
-        // print("groundspeed   " + ship:groundspeed).
-        // print("Separation    " + (dock:NODEPOSITION - ship:position):mag).
-        // print("Descent Tgt   " + vertical_velocity_target).
-        // print("Pitch - Roll  " + pitch_for(ship) + " - " + roll_for(ship)).
-        // //print("Setpoint:     " + forward_velocity_pid:setpoint + " - " + lateral_velocity_pid:setpoint).
-        // //print("Velocity:     " + round(forward_velocity,3) + " - " + round(lateral_velocity,3)).
-        // print("Pos Error:    " + round(x_pid:error,3) + " - " + round(y_pid:error,3)).
-        // print("PID I Terms:  " + round(x_pid:iterm,3) + " - " + round(y_pid:iterm,3)).   
-
-
+    
         // Check if docked, then go to "parked" mode. 
 
     } else if state = "parked" {
@@ -1038,7 +1028,9 @@ until state = "exit" {
 
     // Do landing gear automagically! Because we can! But not always.
     if state = "fly" or state = "hover" or state = "land" or state = "science" or state = "takeoff" {
-        SET GEAR TO ALT:RADAR < 25.
+        if not gear_bypass {
+            SET GEAR TO ALT:RADAR < 25.          
+        }
     }
     
 

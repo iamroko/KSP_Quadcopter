@@ -32,7 +32,7 @@ declare global roll_limit is 35.
 // Yaw / Heading Control
 declare global yaw_kp is 1.0.
 declare global yaw_ki is 0.01.
-declare global yaw_kd is 0.6.//0.6.
+declare global yaw_kd is 0.5.//0.6.
 
 declare global yaw_rpm_limit is 20.
 
@@ -56,8 +56,8 @@ declare global altitude_up_kp is 10.//15.
 declare global altitude_up_ki is 0.1.//.
 declare global altitude_up_kd is 15.
 
-declare global altitude_down_kp is 1.
-declare global altitude_down_ki is 0.1.//.
+declare global altitude_down_kp is 5.
+declare global altitude_down_ki is 0.01.//.
 declare global altitude_down_kd is 30.
 
 declare global max_climb_rate is 15.
@@ -71,9 +71,14 @@ declare global x_kd is 1.//2.
 
 declare global x_speed_limit to 0.5.
 
-declare global y_kp is 0.65.//1.
+
+declare global y_kp is 0.65.//65.//1.
 declare global y_ki is 0.05.
 declare global y_kd is 1.//2.
+
+// declare global y_kp is 1.0.//65.//1.
+// declare global y_ki is 0.001.
+// declare global y_kd is 2.//2.
 
 declare global y_speed_limit to 0.5.
 
