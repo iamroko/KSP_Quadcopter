@@ -14,15 +14,15 @@ set mission to QUEUE(
         lexicon("State", "takeoff",
                 "Altitude", 50),
         lexicon("State", "fly", 
-                "Destination", list("dock", "Duna Sample Return Lander", "targetPort"),
+                "Destination", list("dock", "DSR Lander", "dsrPort"),
                 "Altitude", 50,
                 "MaxSpeed", 30),
         lexicon("State", "Hover",
-                "Destination", list("dock", "Duna Sample Return Lander", "targetPort"),
+                "Destination", list("dock", "DSR Lander", "dsrPort"),
                 "Altitude", 50,
                 "Time", 0),
         lexicon("State", "Dock",
-                "Destination", list("dock", "Duna Sample Return Lander", "targetPort")),
+                "Destination", list("dock", "DSR Lander", "dsrPort")),
         //lexicon("State", "parked"),
         lexicon("State", "exit")
 ). 

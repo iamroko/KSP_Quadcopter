@@ -408,6 +408,19 @@ function parse_destination {
 }
 
 
+function parse_altitude {
+    local parameter altitude_command.
+
+    if altitude_command:istype("Scalar") {
+    // Altitude command is just raw number. This indicated desired height above AGL, and terrain hugging. 
+
+    } else if altitude_command:istype("List") {
+    // Altitude command is a list. This will take the format of: list(altitude, reference)
+    // where reference can by any of: AGL, ASL, AGL_Origin AGL_Slope
+
+    }
+}
+
 
 // Function to automatically point the LIDAR to nadir. Useful when maneuvering. 
 function lidar_nadir {
@@ -537,15 +550,20 @@ until state = "exit" {
 
     if state = "takeoff" {
 
-        // Undock
-        // For some reason this code below sumons the Kraken in some testing.
-        //local undock is ship:partstagged("copterDockingPort").
-        //if undock:length > 0 {
-        //    undock[0]:undock().
-        //} else if undock:length > 1 {
-            //Too many tagged docking ports. Something will go wrong. 
-        //}
-        // Instead of krakening, manual undock.
+        if pre_start {
+
+            // Undock
+            // There is a Kraken risk here. If Krakening, comment out this code and manually undock before starting the program.
+            local undock is ship:partstagged("copterDockingPort").
+            if undock:length > 0 {
+                undock[0]:partner:undock().
+            } else if undock:length > 1 {
+                //Too many tagged docking ports. Something will go wrong. 
+            }
+
+            set pre_start to False.
+        }
+
 
         if pre_start {
 
@@ -746,6 +764,12 @@ until state = "exit" {
 
             set pre_start to False. 
         }
+
+        // Nominally, the port will go through these states:
+        // Ready
+        // Acquire (dockee)
+        // Docked (dockee)
+
         print(ship:partstagged("copterDockingPort")[0]:STATE).
         // Check to see if we're docked yet or not. If not, we can proceed with docking, and will set our heading to match the target. 
         //print(ship:partstagged("copterDockingPort")[0]:STATE). // States didn't seem to match documentation. This is for debugging. 
