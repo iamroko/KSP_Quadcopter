@@ -11,7 +11,7 @@ Included is a simple Quadcopter used to develop this script. So far it has been 
 - [KOS](https://forum.kerbalspaceprogram.com/index.php?/topic/165628-ksp-1101-and-111-kos-v1310-kos-scriptable-autopilot-system/) - What this script actually runs on.
 - [Near Future Solar](https://forum.kerbalspaceprogram.com/index.php?/topic/155465-most-112x-near-future-technologies-august-26/) - This provides the high output solar panel to power it with good sunlight.
 - [Near Future eXploration](https://forum.kerbalspaceprogram.com/index.php?/topic/155465-most-112x-near-future-technologies-august-26/) - Nano landing legs, as well as some tiny antennas. 
-- [Hullcam VDS](http://forum.kerbalspaceprogram.com/index.php?/topic/145633-113-hullcam-vds-continued/&do=findComment&comment=2710247) - Cameras for porbe views.
+- [Hullcam VDS](http://forum.kerbalspaceprogram.com/index.php?/topic/145633-113-hullcam-vds-continued/&do=findComment&comment=2710247) - Cameras for probe views. NOTE: The default mapping of the `backspace` key in Hullcam conflicts with the Abort function of the autopilot. It should be re-mapped in your Hullcam config, or in KSP, or just not used.
 - [LaserDist](http://forum.kerbalspaceprogram.com/index.php?/topic/141697-*) - A laser rangefinder. Not currently used in this script (although there is some code written for it), but in the future may be used to help scan for suitable landing spots. 
 
 Appart from KOS, MODs aren't strictly nessecary for this Quadcopter to work. (i.e. the Near Future Solar cells could be replaced with stock solar cells, or RTGs. However, note that the rotors do consume a fair amount of power, and without a good power source the battery will quickly deplete)
