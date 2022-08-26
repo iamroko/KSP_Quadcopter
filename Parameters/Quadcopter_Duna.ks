@@ -89,7 +89,7 @@ declare global commsat_list is LIST("Duna CommSat I", "Duna CommSat II", "Duna C
 // How high should I be allowed to go.
 declare global ceiling is 20000.
 
-// If going into emergency landing how away can a potential landing spot be. 
+// If going into emergency landing how far away can a potential landing spot be. 
 declare global emergency_search_range is 250.
 
 // RPM required to almost, but not quite, take off. 

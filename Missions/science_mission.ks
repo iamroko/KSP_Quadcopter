@@ -30,7 +30,7 @@ set mission to QUEUE(
                 "Altitude", 50,
                 "Time", 0),
         lexicon("State", "Science",
-                "Instrument", list("SensorThermometer", "SensorBarometer"),
+                "Instrument", list("SensorThermometer"),
                 "Transmit", False),   
         lexicon("State", "Hover",
                 "Destination", list("navigation_target"),

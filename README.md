@@ -28,7 +28,7 @@ Missions in the mission folder should be run from the base directory (e.g. `run 
 
 ## The Comms Manager
 
-Not strictly related to the Quadcopter flight, and not required, there is a Comms Manager library included. This controls antennas tagged "autoAntenna" by automatically activating/deactivating and pointing towards the closest comms satellite above the horizon. This can be confiugred in the parameters file. Set "use_comms_manager" to False if you don't want to use this function. 
+Not strictly related to the Quadcopter flight, and not required, there is a Comms Manager library included. This controls antennas tagged `auto_antenna` by automatically activating/deactivating and pointing towards the closest comms satellite above the horizon. This can be confiugred in the parameters file. Set `use_comms_manager` to False if you don't want to use this function. 
 
 ## Future Development
 

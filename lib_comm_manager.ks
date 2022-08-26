@@ -10,6 +10,8 @@
 
 
 
+// Still some bugs, i.e. will assign two antennas to same commsat occasionally. Need to look into this. 
+
 function comms_manager {
     parameter available_commsats.
     parameter antennas. 
