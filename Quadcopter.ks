@@ -556,23 +556,16 @@ until state = "exit" {
             // There is a Kraken risk here. If Krakening, comment out this code and manually undock before starting the program.
             local undock is ship:partstagged("copterDockingPort").
             if undock:length > 0 {
+                print("Undocking Now").
                 undock[0]:partner:undock().
             } else if undock:length > 1 {
                 //Too many tagged docking ports. Something will go wrong. 
             }
-
-            set pre_start to False.
-        }
-
-
-        if pre_start {
-
             //UNTIL NOT ship:partstagged("copterDockingPort")[0]:HASPARTNER {
                 // Can't do anything while still docked. Need to manually undock since I can't make it not explode when undocking with code above. 
                 // This will hold the program until manually undocked. 
                 wait 0.
             //}
-
 
             // Check if min_solar_exposure is set (should be False if RTG equipped) If set, then check to make sure we have that minimum exposure.
             // This prevents takeoff if there's not enough power for a real sustained flight. 
@@ -588,6 +581,7 @@ until state = "exit" {
                     wait until ship:sensors:light >= min_solar_exposure.
                  }
             } else {
+                    print("Starting up Quadcopter").
                     start_up_sequence().
                     BRAKES OFF.
                     set pre_start to False.
