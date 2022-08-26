@@ -4,7 +4,14 @@ run lib_navball.
 run lib_comm_manager.
 run lib_slope.
 
-//run "mission.ks".
+// When using remotetech, sometimes it will be a long time between issueing the command and starting flight. However, flight does not respond well 
+// to timewarp. Check if we're in timewarp, and cancel before proceeding .
+if warp <> 0 {
+    print("Cancelling Timewarp").
+    set warp to 0.
+    wait until ship:unpacked. 
+    wait 1.
+}
 
 // Flight controls are heavily dependant upon atmospheric pressure and gravity. Each planet requires it's own tuning.
 // Determine which body the vessel is on, and get appropriate input parameters. 
@@ -43,6 +50,7 @@ set start_position to ship:geoposition.
 
 // Setup the vessel and it's control parameters. 
 set rotors to LIST("leftFrontRotor", "leftRearRotor", "rightRearRotor", "rightFrontRotor").
+set blades to SHIP:PARTSNAMED("mediumFanBlade").
 
 // Set low battery threshold. Should be enough to rapidly come to a stop (Recovery) and fly to safe landing zone.
 // check to see if it has bene defined in the mission script or not. 
@@ -50,17 +58,17 @@ if defined low_battery_threshold {} else set low_battery_threshold to 100.
 
 if defined min_solar_exposure {} else set min_solar_exposure to 0.5.
 
-SET heading_pid to PIDLOOP(yaw_kp,yaw_ki,yaw_kd, -20,20).
-SET altitude_pid to PIDLOOP(altitude_up_kp,altitude_up_ki,altitude_up_kd, 50-baseline_thrust, 350-baseline_thrust).
+SET heading_pid to PIDLOOP(yaw_kp,yaw_ki,yaw_kd, -yaw_rpm_limit,yaw_rpm_limit).
+SET altitude_pid to PIDLOOP(altitude_up_kp,altitude_up_ki,altitude_up_kd, 50-baseline_thrust, 410-baseline_thrust).
 
-SET roll_pid to PIDLOOP(roll_kp,roll_ki,roll_kd).
-SET pitch_pid to PIDLOOP(pitch_kp,pitch_ki,pitch_kd).
+SET roll_pid to PIDLOOP(roll_kp,roll_ki,roll_kd, -roll_rpm_limit, roll_rpm_limit).
+SET pitch_pid to PIDLOOP(pitch_kp,pitch_ki,pitch_kd, -pitch_rpm_limit, pitch_rpm_limit).
 
-SET forward_velocity_pid to PIDLOOP(forward_velocity_kp,forward_velocity_ki,forward_velocity_kd,-20,20).
-SET lateral_velocity_pid to PIDLOOP(lateral_velocity_kp,lateral_velocity_ki,lateral_velocity_kd,-20,20).
+SET forward_velocity_pid to PIDLOOP(forward_velocity_kp,forward_velocity_ki,forward_velocity_kd,-pitch_limit,pitch_limit).
+SET lateral_velocity_pid to PIDLOOP(lateral_velocity_kp,lateral_velocity_ki,lateral_velocity_kd,-roll_limit,roll_limit).
 
-SET x_pid to PIDLOOP(x_kp, x_ki, x_kd,-2,2).
-SET y_pid to PIDLOOP(y_kp, y_ki, y_kd,-2,2).
+SET x_pid to PIDLOOP(x_kp, x_ki, x_kd,-x_speed_limit,x_speed_limit).
+SET y_pid to PIDLOOP(y_kp, y_ki, y_kd,-y_speed_limit,y_speed_limit).
 
 function set_rpm {
     parameter name.
@@ -186,8 +194,6 @@ function clamp {
 }
 
 function navigation_loop {
-
-//    local speed_target is 40.
     set forward_velocity_pid:setpoint to speed_target.
     return -forward_velocity_pid:update(TIME:SECONDS, ship:groundspeed).
 }
@@ -217,24 +223,9 @@ function stability_loop {
     } else if steering_error < -180 {
         set steering_error to steering_error + 360.
     }
-
-    // Avoid rollover errors when pointing north. This probably breaks naviation for a range of angles. In fact I know it does.
-    // This is now depracated, as the issues is (properly) fixed in the lines above. Remove this code after sufficient testing. 
-
-    // if compass_for(ship) < 45 {
-    //     set heading_setpoint to heading_setpoint - 180.
-    //     set current_compass to compass_for(ship) - 180.
-    // } else if compass_for(ship) > 315 {
-    //     set heading_setpoint to heading_setpoint - 180.
-    //     set current_compass to compass_for(ship) - 180.
-    // } else {
-    //     set current_compass to compass_for(ship).
-    // }
-
-    // print(steering_error).
-    // print(heading_setpoint + " - " + current_compass).
-        
+     
     // Adjust PID parameters for thrust when going up vs going down. (Gravity compensation!)
+
     local altitude_comp_setpoint is root_control(altitude_setpoint, alt:radar, 2).
 
     if altitude_comp_setpoint < alt:radar - 2 {
@@ -290,30 +281,11 @@ function velocity_loop {
     local lateral_velocity is v1[1].
     //local vertical_velocity is SHIP:VERTICALSPEED.
 
-    // Adjust PID parameters for vertical velocity when going up vs going down. (Gravity compensation!)
-
-    //if vertical_velocity_pid:setpoint < 0 {
-   // if vertical_velocity_pid:error < 0 {
-        //print("DOWN").
-   //     set vertical_velocity_pid:kp to vertical_velocity_down_kp.
-   //     set vertical_velocity_pid:ki to vertical_velocity_down_ki.
-   //     set vertical_velocity_pid:kd to vertical_velocity_down_kd.
-   // } else {
-        //print("UP").
-   //     set vertical_velocity_pid:kp to vertical_velocity_up_kp.
-    //    set vertical_velocity_pid:ki to vertical_velocity_up_ki.
-   //     set vertical_velocity_pid:kd to vertical_velocity_up_kd.
-    //}
+    //print(forward_velocity).
 
     set roll_target to lateral_velocity_pid:update(TIME:SECONDS, lateral_velocity).
     set pitch_target to -forward_velocity_pid:update(TIME:SECONDS, forward_velocity).
-    //set thrust_target to vertical_velocity_pid:update(TIME:SECONDS, vertical_velocity).
-
-    // Damn you gravity!
-//    if vertical_velocity < 0 {
-//        set thrust_target to clamp(thrust_target, -5, 500).
-//    }
-
+    
 }
 
 
@@ -446,20 +418,18 @@ function lidar_nadir {
 
 set quadcopter to ship.
 
-// Deploy Sequence
-    // Set hinge angles
-    // When angle acheived lock
-    // disable motor
-    // unlock rotors
-
-
-// Start up the rotors
-
 function start_up_sequence {
+
+    SET blade to blades:ITERATOR.
+    UNTIL NOT blade:next {
+        local M is blade:value:getmodule("ModuleControlSurface").
+        M:setfield("deploy angle", blade_pitch).
+    }
+
     SET rotor TO rotors:ITERATOR.
     UNTIL NOT rotor:NEXT {
         // Strong torque means more reactive controls and more stable control. Tradeoff for consumption from battery. 
-        set_torque(rotor:VALUE, 100).
+        set_torque(rotor:VALUE, torque_limit).
         set_rpm(rotor:VALUE, 50).
     }
 }
@@ -496,8 +466,6 @@ function get_laser_altitude {
 }
 
 
-
-// States: init, rest, takeoff, fly, land
 set state to "takeoff".
 //set state to "land".
 
@@ -512,7 +480,6 @@ set altitude_target to 50.
 set forward_velocity_target to 0.
 set lateral_velocity_target to 0.
 //set vertical_velocity_target to 0.
-
 
 set speed_target to forward_velocity_limit.
 
@@ -563,7 +530,7 @@ until state = "exit" {
 
     // Run Comms Manager to ensure connectivity. CUrrently only runs every 30 seconds to reduce load. 
     // This should be fine for most MEO to GEO comms constellations. 
-    if TIME:SECONDS - comms_manager_lastrun > 30 {
+    if TIME:SECONDS - comms_manager_lastrun > 30 and use_comms_manager {
         comms_manager(commsat_list, SHIP:PARTSDUBBED("auto_antenna")).
         SET comms_manager_lastrun TO TIME:SECONDS.
     }
@@ -571,7 +538,7 @@ until state = "exit" {
     if state = "takeoff" {
 
         // Undock
-        // For some reason this code below sumons the Kraken.
+        // For some reason this code below sumons the Kraken in some testing.
         //local undock is ship:partstagged("copterDockingPort").
         //if undock:length > 0 {
         //    undock[0]:undock().
@@ -591,13 +558,17 @@ until state = "exit" {
 
             // Check if min_solar_exposure is set (should be False if RTG equipped) If set, then check to make sure we have that minimum exposure.
             // This prevents takeoff if there's not enough power for a real sustained flight. 
-            print(min_solar_exposure).
+            //print(min_solar_exposure).
             if min_solar_exposure {
                 if ship:sensors:light >= min_solar_exposure {
                     start_up_sequence().
                     BRAKES OFF.
                     set pre_start to False.
-                } else { }
+                } else {
+                    print(ship:sensors:light + " is below the minimum solar exposure threshold of " + min_solar_exposure + ".").
+                    print("Waiting for sufficient light.").
+                    wait until ship:sensors:light >= min_solar_exposure.
+                 }
             } else {
                     start_up_sequence().
                     BRAKES OFF.
@@ -605,8 +576,6 @@ until state = "exit" {
             }
 
         }
-
-
 
         set altitude_target to current_task:Altitude.
 
@@ -632,13 +601,18 @@ until state = "exit" {
 
         set heading_target to get_bearing(SHIP:GEOPOSITION, destination).
         //print(destination).
-        if abs(heading_pid:error) > 30 {
+        // Don't start flying until within certain deadband of heading.
+        if abs(heading_pid:error) > 20 {
             set forward_velocity_target to 0.
             set lateral_velocity_target to 0.
 
         } else { 
-            //set forward_velocity_pid:setpoint to abs(min(get_distance(SHIP:GEOPOSITION, destination)/10-0.1, 20)).
-            set forward_velocity_target to abs(min(get_distance(SHIP:GEOPOSITION, destination)/8-0.1, forward_velocity_limit)).
+            // Need time to decelerate, and this will depend on the body's atmosphere and PID tuning.
+            // TODO: Add to parameters list. 
+            // Good for Kerbin:
+            //set forward_velocity_target to abs(min(get_distance(SHIP:GEOPOSITION, destination)/8-0.1, forward_velocity_limit)).
+            // Good for Duna
+            set forward_velocity_target to abs(max(min(get_distance(SHIP:GEOPOSITION, destination)/8, forward_velocity_limit), 0.5)).
         }
 
         // clearscreen.
@@ -666,6 +640,10 @@ until state = "exit" {
 
             if current_task:haskey("Destination") {
                 set destination to parse_destination(current_task:Destination).
+                if current_task:Destination[0] = "dock" {
+                    set heading_target to compass_for(vessel(current_task:Destination[1])).
+                }
+
             } else {
                 set destination to ship:geoposition.
             }
@@ -673,32 +651,10 @@ until state = "exit" {
 
             set timer to -1.
 
-            if current_task:Destination[0] = "dock" {
-                set heading_target to compass_for(vessel(current_task:Destination[1])).
-            }
-
-
             set pre_start to False. 
         }
 
-
-        //set heading_target to 0.
-
-    /// debug only
-    //local v1 is get_velocity.
-    //    set v1 to vectorRotate(v1[1],v1[0],-compass_for(ship)).
-
-    //    local forward_velocity is v1[0].
-    //    local lateral_velocity is v1[1].
-    // debug only
-
-
         keep_position(destination).
-
-        //set forward_velocity_target to 0.
-        //set lateral_velocity_target to 0.
-
-        
 
         clearscreen.
         print("Mode:          Hover at location").
@@ -710,24 +666,25 @@ until state = "exit" {
         // //print("Setpoint:     " + forward_velocity_pid:setpoint + " - " + lateral_velocity_pid:setpoint).
         // //print("Velocity:     " + round(forward_velocity,3) + " - " + round(lateral_velocity,3)).
         print("Pos Error:    " + round(x_pid:error,3) + " - " + round(y_pid:error,3)).
-        print("PID I Terms:  " + round(x_pid:iterm,3) + " - " + round(y_pid:iterm,3)).     
+        print("PID P Terms:  " + round(x_pid:pterm,3) + " - " + round(y_pid:pterm,3)).   
+        print("PID I Terms:  " + round(x_pid:iterm,3) + " - " + round(y_pid:iterm,3)).   
+        print("PID D Terms:  " + round(x_pid:dterm,3) + " - " + round(y_pid:dterm,3)).     
         // print("Emergency:    " + emergency).
         // print(corrections).
         
         //TODO: Make this configurable in the mission control.
         if emergency {
             // If emergency, just get a "good enough" position. Don't waste time getting precise.  
-            set location_error to 1.5.
-            set location_i to 1.5.
+            set location_error to 2.5.
+            set speed_error to 1.5.
         } else {
             set location_error to 0.1.
-            set location_i to 0.1.
+            set speed_error to 0.1.
         }
 
-
         // Check if we've got good positional error. if so, start the timer.
-        //if abs(x_pid:error) < location_error and abs(y_pid:error) < location_error and abs(x_pid:iterm) < location_i and abs(y_pid:iterm) < location_i {
-        if sqrt( x_pid:error*x_pid:error + y_pid:error*y_pid:error) < location_error and sqrt( x_pid:iterm*x_pid:iterm + y_pid:iterm*y_pid:iterm) < location_i {
+        //if sqrt( x_pid:error*x_pid:error + y_pid:error*y_pid:error) < location_error and sqrt( x_pid:iterm*x_pid:iterm + y_pid:iterm*y_pid:iterm) < location_i {
+        if sqrt( x_pid:error*x_pid:error + y_pid:error*y_pid:error) < location_error and VECTOREXCLUDE(SHIP:UP:FOREVECTOR , SHIP:VELOCITY:SURFACE):MAG < speed_error {
            //set state to "task_complete".
            if timer = -1 set timer to TIME:SECONDS.
         } 
@@ -742,12 +699,9 @@ until state = "exit" {
         // Find the flattest spot to land within 500 meters execute an emergency landing. 
         print("Going into Emergency Landing Mode.").
         print("Coarse Searching for suitable landing zone.").
-        set coarse_search to search_slope(ship:geoposition, 500, 50, 45, 5).
+        set coarse_search to search_slope(ship:geoposition, emergency_search_range, 50, 45, 5).
         print("Fine Searching for suitable landing zone.").
-        set destination to search_slope(coarse_search[0], 100, 20, 30, 2)[0].
-
-        // This is redundant? Don't need it. 
-        //set emergency to True.
+        set destination to search_slope(coarse_search[0], emergency_search_range / 5, 20, 30, 2)[0].
 
         // Overwrite the mission with a new emergency landing mission. 
         set mission to QUEUE(
@@ -804,8 +758,6 @@ until state = "exit" {
 
         // Cut a piece of paper in half, forever. Or until docked.
         set altitude_target to alt:radar - (dock:NODEPOSITION - ship:position):mag / 4.
-
-        //set vertical_velocity_target to min(max(-(dock:NODEPOSITION - ship:position):mag/10, -5),-1).
 
         
         keep_position(destination).
@@ -959,6 +911,9 @@ until state = "exit" {
 
             set pitch_target to 0.
             set roll_target to 0.
+
+            set forward_velocity_target to 0.
+            set lateral_velocity_target to 0.
         }
 
         if cycle_count < current_task:Cycles {
@@ -967,22 +922,41 @@ until state = "exit" {
                 if current_task:mode = "pitch" {
                     print(pitch_target).
                     if pitch_target = 0 or pitch_target = -current_task:Delta {
-                        print("Setting Pitch to 20").
+                        print("Setting Pitch to " + current_task:Delta).
                         set pitch_target to current_task:Delta.
                     } else { //if pitch_target = current_task:Delta {
-                        print("Setting Pitch to -20").
+                        print("Setting Pitch to -"+current_task:Delta).
                         set pitch_target to -current_task:Delta.
                     }
  //               set roll_target to 0.
 
                 } else if current_task:mode = "forward_velocity" {
-
+                    if forward_velocity_target = 0 or forward_velocity_target = -current_task:Delta {
+                        print("Setting Velocity to " + current_task:Delta).
+                        set forward_velocity_target to current_task:Delta.
+                    } else { //if pitch_target = current_task:Delta {
+                        print("Setting Velocity to -" + current_task:Delta).
+                        set forward_velocity_target to -current_task:Delta.
+                    }
                 }
             set cycle_count to cycle_count + 1.
             set count_time to TIME:SECONDS.
             }
         } else {
             set state to "task_complete".
+        }
+
+        if current_task:mode = "pitch" {
+            // Todo: Log debug outputs. 
+        } else if current_task:mode = "forward_velocity" {
+            // Todo: Log debug outputs.
+            clearscreen.
+            print(forward_velocity_target).
+            print(forward_velocity_pid:setpoint).
+            print("PID P Terms:  " + round(forward_velocity_pid:pterm,3)).   
+            print("PID I Terms:  " + round(forward_velocity_pid:iterm,3)).   
+            print("PID D Terms:  " + round(forward_velocity_pid:dterm,3)).   
+            velocity_loop(forward_velocity_target, lateral_velocity_target).  
         }
     
     set altitude_setpoint to altitude_target. // altitude_loop(altitude_target).
@@ -1041,7 +1015,7 @@ until state = "exit" {
 
     // Do landing gear automagically! Because we can! But not always.
     if state = "fly" or state = "hover" or state = "land" or state = "science" or state = "takeoff" {
-        SET GEAR TO ALT:RADAR<25.
+        SET GEAR TO ALT:RADAR < 25.
     }
     
 
@@ -1067,25 +1041,25 @@ until state = "exit" {
 //    TRUE
 //    ).
 
-    // SET progradeArrow TO VECDRAWARGS(
-    // v(0,0,0),
-    // VECTOREXCLUDE(SHIP:UP:FOREVECTOR , SHIP:SRFPROGRADE:VECTOR),
-    // GREEN,
-    // "Prograde",
-    // 1,
-    // TRUE
-    // ).
+//     SET progradeArrow TO VECDRAWARGS(
+//     v(0,0,0),
+//     VECTOREXCLUDE(SHIP:UP:FOREVECTOR , SHIP:SRFPROGRADE:VECTOR),
+//     GREEN,
+//     "Prograde",
+//     1,
+//     TRUE
+//     ).
 
-    // wait 0.
+//     wait 0.
 
-    // SET zenithArrow TO VECDRAWARGS(
-    // v(0,0,0),
-    // SHIP:UP:FOREVECTOR,
-    // YELLOW,
-    // "Zenith",
-    // 1,
-    // TRUE
-    // ).
+//     SET zenithArrow TO VECDRAWARGS(
+//     v(0,0,0),
+//     SHIP:UP:FOREVECTOR,
+//     YELLOW,
+//     "Zenith",
+//     1,
+//     TRUE
+//     ).
 
     wait 0.
 
