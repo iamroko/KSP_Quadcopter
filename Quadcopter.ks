@@ -228,6 +228,8 @@ function stability_loop {
 
     local altitude_comp_setpoint is root_control(altitude_setpoint, alt:radar, 2).
 
+    //print(alt:radar - altitude_comp_setpoint).
+
     if altitude_comp_setpoint < alt:radar - 2 {
         set altitude_pid:kp to altitude_down_kp.
         set altitude_pid:ki to altitude_down_ki.
@@ -386,8 +388,8 @@ function parse_destination {
         // This can then be corrected with a "Hover" mode for find position adjustment. 
 
         if vessel(input[1]):unpacked {
-            set dock to vessel(input[1]):partstagged(input[2])[0].
-            return body:geopositionof(dock:nodeposition).
+            set target_dock to vessel(input[1]):partstagged(input[2])[0].
+            return body:geopositionof(target_dock:nodeposition).
             //set dockAltitude to body:altitudeof(dock:nodeposition).
         } else {
             return vessel(input[1]):geoposition.
@@ -763,9 +765,13 @@ until state = "exit" {
 
         if pre_start {
 
-            SET TARGET TO vessel(current_task:destination[1]):partstagged(current_task:destination[2])[0].
+            set target_dock to vessel(current_task:destination[1]):partstagged(current_task:destination[2])[0].
+            SET TARGET TO target_dock. //vessel(current_task:destination[1]):partstagged(current_task:destination[2])[0].
             print("Descending to dock.").
             set pre_start to False. 
+
+            set target_dock_altitude to vessel(current_task:destination[1]):geoposition:altitudeposition(vessel(current_task:destination[1]):geoposition:terrainheight):mag + (up:forevector*target_dock:nodeposition).
+            print("Dockign port altitude is " + target_dock_altitude + "m above terrain.").
         }
 
         // Nominally, the port will go through these states:
@@ -784,7 +790,9 @@ until state = "exit" {
         }
 
         // Cut a piece of paper in half, forever. Or until docked.
-        set altitude_target to (dock:NODEPOSITION):mag. //alt:radar - (dock:NODEPOSITION - ship:position):mag / 4.
+        // This isn't entirely correct. the nodeposition is relative to the center of mass of the target vessel.
+        //set altitude_target to (dock:NODEPOSITION):mag. //alt:radar - (dock:NODEPOSITION - ship:position):mag / 4.
+        set altitude_target to target_dock_altitude.
 
         
         keep_position(destination).

@@ -53,7 +53,7 @@ declare global vertical_velocity_limit is 10.
 // Altitude Control
 // Two sets because gravity suuuccckkkss. 
 declare global altitude_up_kp is 10.//15.
-declare global altitude_up_ki is 0.1.//.
+declare global altitude_up_ki is 0.01.//.
 declare global altitude_up_kd is 15.
 
 declare global altitude_down_kp is 5.
