@@ -493,10 +493,6 @@ function get_laser_altitude {
     return laser_module:GETFIELD("Distance").
 }
 
-
-set state to "takeoff".
-//set state to "land".
-
 // Initialize and set some defaults.
 set pitch_target to 0.
 set roll_target to 0.
@@ -514,11 +510,6 @@ set speed_target to forward_velocity_limit.
 lock altitude_reference to alt:radar.
 
 set destination to SHIP:GEOPOSITION.
-//
-//set destination to dockLocation.
-
-//print(SHIP:GEOPOSITION).
-//print(destination).
 
 set timer to 0.
 
@@ -565,7 +556,7 @@ until state = "exit" {
     }
 
     // Run Comms Manager to ensure connectivity. Currently only runs every 30 seconds to reduce load. 
-    // This should be fine for most MEO to GEO comms constellations. 
+    // This should be fine for most LEO, MEO and GEO comms constellations. 
     if TIME:SECONDS - comms_manager_lastrun > 30 and use_comms_manager {
         comms_manager(commsat_list, SHIP:PARTSDUBBED("auto_antenna")).
         SET comms_manager_lastrun TO TIME:SECONDS.
@@ -577,11 +568,7 @@ until state = "exit" {
 
             wait 1.
 
-            // Undock
-            // There is a Kraken risk here. If Krakening, comment out this code and manually undock before starting the program.
-
-            //print(ship:partstagged("copterDockingPort")[0]:STATE).
-
+            // Undock if applicable. There is a Kraken risk here. If Krakening, comment out this code and manually undock before starting the program.
             local undock is ship:partstagged("copterDockingPort").
             if undock:length > 0 and undock[0]:state = "Docked (dockee)" {
                 print("Undocking Now").
