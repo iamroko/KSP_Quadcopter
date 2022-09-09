@@ -46,7 +46,7 @@ declare global lateral_velocity_kp is 5.5.
 declare global lateral_velocity_ki is 0.050. //1
 declare global lateral_velocity_kd is 1.75.// 2.5.
 
-declare global forward_velocity_limit is 20.
+declare global forward_velocity_limit is 40.
 declare global lateral_velocity_limit is 20.
 declare global vertical_velocity_limit is 10.
 

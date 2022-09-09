@@ -713,9 +713,9 @@ until state = "exit" {
         // Find the flattest spot to land within 500 meters execute an emergency landing. 
         print("Going into Emergency Landing Mode.").
         print("Coarse Searching for suitable landing zone.").
-        set coarse_search to search_slope(ship:geoposition, emergency_search_range, 25, 20, 5).
+        set coarse_search to search_slope(ship:geoposition, emergency_search_range, 25, 45, 5).
         print("Fine Searching for suitable landing zone.").
-        set destination to search_slope(coarse_search[0], emergency_search_range / 5, 10, 30, 2)[0].
+        set destination to search_slope(coarse_search[0], emergency_search_range / 10, 10, 30, 2)[0].
 
         // Overwrite the mission with a new emergency landing mission. 
         set mission to QUEUE(
